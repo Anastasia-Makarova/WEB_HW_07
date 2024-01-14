@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Integer, ForeignKey, Date
 from sqlalchemy.orm import relationship
 
-from db import Base
+from src.db import Base
 
 
 class Techer(Base):
