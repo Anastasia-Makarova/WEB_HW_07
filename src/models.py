@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 from src.db import Base
 
 
-class Techer(Base):
+class Teacher(Base):
     __tablename__ = 'teachers'
     id = Column(Integer, primary_key=True)
     fullname = Column(String(120), nullable=False)
