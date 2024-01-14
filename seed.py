@@ -29,8 +29,7 @@ def fill_data():
         'History', 
         'Literature', 
         'Coding', 
-        'English'
-        'Biology'
+        'English',
         ]
 
     students_groups = [

@@ -1,4 +1,5 @@
 from sqlalchemy import func, desc, and_,select
+from sqlalchemy.orm import joinedload, subqueryload
 
 from src.models import Teacher, Student, Group, Discipline, Grade
 from src.db import session
@@ -61,7 +62,7 @@ def query_6(group_id:int) -> list:
     return result 
 
 '''Знайти оцінки студентів у окремій групі з певного предмета.'''
-def query_7(group_id,discipline_id) -> list:
+def query_7(group_id,discipline_id:int) -> list:
     result = session.query(Discipline.name, Group.name, Student.fullname, Grade.grade)\
                         .select_from(Grade).join(Student).join(Discipline).join(Group)\
                         .filter(and_(Group.id==group_id), Discipline.id==discipline_id)\
@@ -69,71 +70,33 @@ def query_7(group_id,discipline_id) -> list:
     
     return result 
 
-''' SELECT d.name, sg.group_name, s.fullname,  g.grade 
-    FROM grades g
-    JOIN students s ON g.student_id = s.student_id 
-    JOIN disciplines d ON g.discipline_id = d.discipline_id 
-    JOIN students_groups sg
-WHERE sg.group_id = 3 AND d.discipline_id = 5'''
-
 '''Знайти середній бал, який ставить певний викладач зі своїх предметів.'''
-def query_8() -> list:
-    result = session.query(Discipline.name, Student.fullname, func.round(func.avg(), 2).label(''))\
-                        .select_from().join().join()\
-                        .filter()\
-                        .group_by()\
-                        .order_by(desc())\
-                        .limit().all()
+def query_8(teacher_id:int) -> list:
+    result = session.query(Teacher.fullname, Discipline.name, func.round(func.avg(Grade.grade), 2).label('average_grade'))\
+                        .select_from(Teacher).join(Discipline).join(Grade)\
+                        .filter(Teacher.id==teacher_id)\
+                        .group_by(Discipline.name, Teacher.fullname)\
+                        .all()
     
     return result 
 
 '''Знайти список курсів, які відвідує певний студент.'''
-def query_9() -> list:
-    result = session.query(Discipline.name, Student.fullname, func.round(func.avg(), 2).label(''))\
-                        .select_from().join().join()\
-                        .filter()\
-                        .group_by()\
-                        .order_by(desc())\
-                        .limit().all()
+def query_9(student_id:int) -> list:
+    result = session.query(Student.fullname, Discipline.name)\
+                        .select_from(Grade).join(Student).join(Discipline)\
+                        .filter(Student.id==student_id)\
+                        .all()
     
     return result 
 
 '''Список курсів, які певному студенту читає певний викладач'''
-def query_10() -> list:
-    result = session.query(Discipline.name, Student.fullname, func.round(func.avg(), 2).label(''))\
-                        .select_from().join().join()\
-                        .filter()\
-                        .group_by()\
-                        .order_by(desc())\
-                        .limit().all()
+def query_10(student_id, teacher_id) -> list:
+    result = session.query(Teacher.fullname, Student.fullname, Discipline.name)\
+                        .select_from(Grade).join(Student).join(Discipline).join(Teacher)\
+                        .filter(and_(Teacher.id==teacher_id, Student.id==student_id))\
+                        .all()
     
     return result 
-
-
-
-
-
-
-'''Extra -2 Оцінки студентів у певній групі з певного предмета на останньому занятті.'''
-
-def query_12(group_id: int, discipline_id:int):
-    subquery = (select(Grade.date_of)\
-                .join(Student).join(Group)\
-                .where(and_\
-                       (Grade.discipline_id == discipline_id,\
-                       Group.id == group_id))\
-                .order_by(desc(Grade.date_of))\
-                .scalar_subquery())
-    
-    result = session.query(Discipline.name, Student.fullname, Group.name, Grade.date_of, Grade.grade)\
-                .select_from(Grade).join(Student).join(Discipline).join(Group)\
-                    .filter(and_(\
-                        Discipline.id == discipline_id,\
-                        Group.id == group_id,\
-                        Grade.date_of == subquery))\
-                        .order_by(desc(Grade.date_of))\
-                        .all()
-    return result
 
 
 print('')
@@ -150,45 +113,37 @@ print('\033[31m','Q3: Знайти середній бал у групах з п
 for d in query_3():
     print(d)
 
-
 print('')
 print('\033[31m','Q4: Знайти середній бал на потоці (по всій таблиці оцінок).','\033[0m')
 print(query_4()[0][0])
-
 
 print('')
 print('\033[31m','Q5: Знайти які курси читає певний викладач.','\033[0m')
 for d in query_5(2):
     print(d)
 
-
 print('')
 print('\033[31m','Q6: Знайти список студентів у певній групі.','\033[0m')
-for st in query_6(2):
+for st in query_6(3):
     print(st)
-
 
 print('')
 print('\033[31m','Q7: найти оцінки студентів у окремій групі з певного предмета.','\033[0m')
-for r in query_7(2,5):
+for r in query_7(2,6):
     print(r)
 
+print('')
+print('\033[31m','Q8: Знайти середній бал, який ставить певний викладач зі своїх предметів.','\033[0m')
+for t in query_8(3):
+    print(t)
 
+print('')
+print('\033[31m','Q9: Знайти список курсів, які відвідує певний студент.','\033[0m')
+for st in query_9(34):
+    print(st)
 
-# print('')
-# print('\033[31m','Q8: Знайти середній бал, який ставить певний викладач зі своїх предметів.','\033[0m')
-# print(query_8())
+print('')
+print('\033[31m','Q10: Список курсів, які певному студенту читає певний викладач','\033[0m')
+for st in query_10(45, 3):
+    print(st)
 
-
-# print('')
-# print('\033[31m','Q9: Знайти список курсів, які відвідує певний студент.','\033[0m')
-# print(query_9())
-
-
-# print('')
-# print('\033[31m','Q10: Список курсів, які певному студенту читає певний викладач','\033[0m')
-# print(query_10())
-
-# print('')
-# print('\033[31m','Q12: Extra -2 Оцінки студентів у певній групі з певного предмета на останньому занятті','\033[0m')
-# print(query_12(1, 2))
